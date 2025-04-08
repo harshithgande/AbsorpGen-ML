@@ -1,28 +1,42 @@
 import torch
 import pandas as pd
-import os
-import joblib
+import numpy as np
 from pathlib import Path
-from src.model import AbsorpGenMultiTaskModel
-from src.drug_lookup import lookup_drug_features, suggest_alternative_drug
-from scripts.rxnorm_lookup import get_most_common_brand
+import joblib
+import sys
+import os
+
+# Add the parent directory to the path so we can import our modules
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from .model import AbsorpGenMultiTaskModel
+from .drug_lookup import lookup_drug_features, suggest_alternative_drug
+from .rxnorm_lookup import get_most_common_brand
 
 def predict_new(user_input, drug_name):
     # Load drug features
     drug_features = lookup_drug_features(drug_name)
 
-    # Combine drug and user features
-    all_features = {
-        'molecular_weight': drug_features['molecular_weight'],
+    # Prepare patient features
+    patient_features = {
+        'age': user_input['age'] / 100,  # Scale to 0-1 range
+        'weight': user_input['weight'] / 200,  # Scale to 0-1 range
+        'sex': 1 if user_input['sex'].lower() == 'male' else 0,  # Binary encoding
+        'height': user_input['height'] / 200  # Scale to 0-1 range
+    }
+
+    # Prepare drug features
+    drug_features_scaled = {
+        'molecular_weight': drug_features['molecular_weight'] / 1000,  # Scale to kg/mol
         'logP': drug_features['logP'],
         'pKa': drug_features['pKa'],
-        'age': user_input['age'],
-        'weight': user_input['weight'],
-        'sex': user_input['sex'],
-        'route_admin': user_input['route_admin'],
-        'strength_mg_per_unit': drug_features['strength_mg_per_unit'],
-        'formulation_concentration': drug_features['formulation_concentration']
+        'route_admin': 1 if user_input['route_admin'].lower() == 'oral' else 0,  # Binary encoding
+        'strength_mg_per_unit': drug_features['strength_mg_per_unit'] / 1000,  # Scale to g/unit
+        'formulation_concentration': drug_features['formulation_concentration'] / 1000 if drug_features['formulation_concentration'] else 0  # Scale to g/mL
     }
+
+    # Combine all features
+    all_features = {**patient_features, **drug_features_scaled}
 
     df = pd.DataFrame([all_features])
     for col in ['bioavailability', 'tmax', 'cmax', 'dose', 'formulation_type']:
@@ -72,7 +86,8 @@ def predict_new(user_input, drug_name):
 
     # Format output
     regression_outputs = reg_output.numpy().flatten()
-    formulation = encoder.inverse_transform([class_pred])[0]
+    # Use formulation from drug lookup instead of model prediction
+    formulation = drug_features['formulation']
     labels = ['bioavailability', 'tmax', 'cmax', 'dose']
     results = dict(zip(labels, regression_outputs))
     results.update({
