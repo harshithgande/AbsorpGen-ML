@@ -1,40 +1,32 @@
 import pandas as pd
-from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
-from sklearn.compose import ColumnTransformer
+from pathlib import Path
 
-# Global encoder to be used in train and predict
-formulation_encoder = LabelEncoder()
+def load_data():
+    base = Path(__file__).resolve().parent.parent
+    df = pd.read_csv(base / 'data' / 'raw' / 'chembl_drug_database.csv')
 
-def load_mock_data():
-    data = {
-        'molecular_weight': [300.5, 450.2, 180.0],
-        'logP': [2.1, 4.5, 1.3],
-        'pKa': [4.8, 7.2, 5.5],
-        'age': [25, 60, 45],
-        'weight': [70, 85, 55],
-        'sex': ['male', 'female', 'female'],
-        'route_admin': ['oral', 'oral', 'iv'],
-        'bioavailability': [0.75, 0.60, 0.95],
-        'tmax': [2.5, 3.0, 1.8],
-        'cmax': [20, 15, 30],
-        'dose': [250, 300, 200],
-        'formulation_type': ['tablet', 'liquid', 'delayed release']
-    }
-    return pd.DataFrame(data)
+    # Add synthetic user inputs
+    df['age'] = 35
+    df['weight'] = 70
+    df['sex'] = 'male'
+    df['route_admin'] = 'oral'
 
-def preprocess_data(df):
-    regression_targets = df[['bioavailability', 'tmax', 'cmax', 'dose']]
-    class_target = formulation_encoder.fit_transform(df['formulation_type'])
+    # Add synthetic training targets
+    df['tmax'] = df['molecular_weight'] * 0.02
+    df['cmax'] = df['logP'] * 20
+    df['dose'] = df['molecular_weight'] * 0.1
+    df['formulation_type'] = 'tablet'
 
-    features = df.drop(columns=['bioavailability', 'tmax', 'cmax', 'dose', 'formulation_type'])
+    # Drop rows with missing values in critical columns
+    features = ['molecular_weight', 'logP', 'pKa', 'age', 'weight', 'sex', 'route_admin',
+                'strength_mg_per_unit', 'formulation_concentration']
+    targets = ['bioavailability', 'tmax', 'cmax', 'dose']
+    target_class = 'formulation_type'
 
-    numeric_features = ['molecular_weight', 'logP', 'pKa', 'age', 'weight']
-    categorical_features = ['sex', 'route_admin']
+    df = df.dropna(subset=features + targets + [target_class])
 
-    preprocessor = ColumnTransformer(transformers=[
-        ('num', StandardScaler(), numeric_features),
-        ('cat', OneHotEncoder(), categorical_features)
-    ])
+    X = df[features]
+    y_reg = df[targets]
+    y_class = df[target_class]
 
-    X_processed = preprocessor.fit_transform(features)
-    return X_processed, regression_targets, class_target, preprocessor
+    return X, y_reg, y_class

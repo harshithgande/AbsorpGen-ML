@@ -1,6 +1,19 @@
 import torch
 import torch.nn as nn
 
+class BioavailabilityMLP(nn.Module):
+    def __init__(self, input_dim):
+        super(BioavailabilityMLP, self).__init__()
+        self.model = nn.Sequential(
+            nn.Linear(input_dim, 64),
+            nn.ReLU(),
+            nn.Linear(64, 32),
+            nn.ReLU(),
+            nn.Linear(32, 1)  # Output: bioavailability
+        )
+
+    def forward(self, x):
+        return self.model(x)
 class AbsorpGenMultiTaskModel(nn.Module):
     def __init__(self, input_dim, num_classes=3):
         super().__init__()

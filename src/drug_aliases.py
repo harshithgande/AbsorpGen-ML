@@ -1,0 +1,20 @@
+# Drug alias mapping for user-friendly output
+drug_aliases = {
+    "CIPROFLOXACIN": "Cipro (Antibiotic)",
+    "OFLOXACIN": "Floxin (Antibiotic)",
+    "PRAZOSIN": "Minipress (Blood Pressure / PTSD)",
+    "NICOTINE": "Nicotine (Patch / Gum for smoking cessation)",
+    "NALIDIXIC ACID": "NegGram (Antibiotic for UTIs)",
+    "DIFLOXACIN": "Dicural (Veterinary Antibiotic)",
+    "TAZOBACTAM": "Used with Piperacillin (Antibiotic Combo)",
+    "FLEFLOXACIN": "Flevo (Fluoroquinolone Antibiotic)",
+    "MERAFLOXACIN": "Fluoroquinolone-class Antibiotic",
+    "AMIFLOXACIN": "Experimental Fluoroquinolone Antibiotic",
+    "NITROFURANTOIN": "Macrobid (UTI Antibiotic)",
+    "NORFLOXACIN": "Noroxin (Antibiotic for Prostate / UTIs)",
+    "DARAPLADIB": "Experimental anti-inflammatory",
+    "SB-203580": "Experimental MAP Kinase Inhibitor",
+    "SB-431542": "Experimental TGF-beta Inhibitor",
+    "PD-117558": "Experimental drug (Parkinson's research)",
+    "HARMINE": "MAO Inhibitor (studied for neurological effects)",
+}
